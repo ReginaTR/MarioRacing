@@ -1,4 +1,4 @@
-<h1>Project Chalenge by Felipão DIO: Mario Kart.JS</h1>
+<h1>Project Challenge by Felipão DIO: Mario Kart.JS</h1>
 
   <table>
         <tr>
