@@ -14,12 +14,20 @@ const player2 = {
     POINTS: 0,
 };
 
-async function logRollResut(characterName, block, diceResult, attribute) {
+async function logRollResult(characterName, block, diceResult, attribute) {
     console.log(`${characterName} rolled a die 🎲 of ${block} ${diceResult} + ${attribute} = ${diceResult + attribute}`);
 }
 
 async function rollDice() {
     return Math.floor(Math.random() * 6) + 1;
+}
+
+async function getClashPenalty() {
+    return Math.random() < 0.5 ? { type: 'SHELL', value: 1 } : { type: 'BOMB', value: 2 };
+}
+
+async function getTurboBonus() {
+    return Math.random() < 0.5 ? 1 : 0;
 }
 
 async function getRandomBlock(){
@@ -48,27 +56,27 @@ async function playRaceEngine(character1, character2) {
       //draw a block 
       let block = await getRandomBlock();
       console.log(`Block ${block}`)
-    
+
       //roll the dice
       let diceResult1 = await rollDice()
       let diceResult2 = await rollDice()
 
       //skill test
-      let totalSkilltest1 = 0;
-      let totalSkilltest2 = 0;
+      let totalSkillTest1 = 0;
+      let totalSkillTest2 = 0;
 
       if(block === "STRAIGHT"){
-        totalSkilltest1 = diceResult1 + character1.VELOCITY;
-        totalSkilltest2 = diceResult2 + character2.VELOCITY;
+        totalSkillTest1 = diceResult1 + character1.VELOCITY;
+        totalSkillTest2 = diceResult2 + character2.VELOCITY;
 
-        await logRollResut(
+        await logRollResult(
             character1.NAME, 
             "velocity",
             diceResult1,
             character1.VELOCITY
         );
         
-        await logRollResut(
+        await logRollResult(
             character2.NAME, 
             "velocity",
             diceResult2,
@@ -76,17 +84,17 @@ async function playRaceEngine(character1, character2) {
         );
       }
       if(block === "TURN"){
-        totalSkilltest1 = diceResult1 + character1.MANEUVERABILITY
-        totalSkilltest2 = diceResult2 + character2.MANEUVERABILITY
+        totalSkillTest1 = diceResult1 + character1.MANEUVERABILITY
+        totalSkillTest2 = diceResult2 + character2.MANEUVERABILITY
 
-        await logRollResut(
+        await logRollResult(
             character1.NAME, 
             "maneuverability",
             diceResult1,
             character1.MANEUVERABILITY
         );
         
-        await logRollResut(
+        await logRollResult(
             character2.NAME, 
             "maneuverability",
             diceResult2,
@@ -99,14 +107,14 @@ async function playRaceEngine(character1, character2) {
 
         console.log(`${character1.NAME} clashed ${character2.NAME}!🥊`)
 
-        await logRollResut(
+        await logRollResult(
             character1.NAME,
             "power",
             diceResult1,
             character1.POWER
         );
         
-        await logRollResut(
+        await logRollResult(
             character2.NAME,
             "power",
             diceResult2,
@@ -114,24 +122,38 @@ async function playRaceEngine(character1, character2) {
         );
 
         if(powerResult1 > powerResult2 && character2.POINTS > 0) {
-            console.log(`${character1.NAME} wins! 🎆 ${character2.NAME} lost 1 point. 🐢`)
-            character2.POINTS--;
-        };
+            const penalty = await getClashPenalty();
+            character2.POINTS = Math.max(0, character2.POINTS - penalty.value);
+            console.log(`${character1.NAME} wins! 🎆 ${character2.NAME} hit by a ${penalty.type}! Lost ${penalty.value} point(s). 🐢`);
+    
+            const turbo = await getTurboBonus();
+            if (turbo) {
+                character1.POINTS += turbo;
+                console.log(`${character1.NAME} got a turbo! 🚀 +${turbo} point.`);
+            }
+        }
 
         if(powerResult2 > powerResult1 && character1.POINTS > 0) {
-            console.log(`${character2.NAME} wins! 🎆 ${character1.NAME} lost 1 point. 🐢`)
-            character1.POINTS--;
+            const penalty = await getClashPenalty();
+            character1.POINTS = Math.max(0, character1.POINTS - penalty.value);
+            console.log(`${character2.NAME} wins! 🎆 ${character1.NAME} hit by a ${penalty.type}! Lost ${penalty.value} point(s). 🐢`);
+
+            const turbo = await getTurboBonus();
+            if (turbo) {
+                character2.POINTS += turbo;
+                console.log(`${character2.NAME} got a turbo! 🚀 +${turbo} point.`);
+            }
         };
 
-        console.log(powerResult1 === powerResult2 ? "It's a tie! Not a single point lost.": "");
+        console.log(powerResult1 === powerResult2 ? "It's a tie! No points awarded this round.": "");
 
       }
 
       //checking winner
-      if (totalSkilltest1 > totalSkilltest2){
+      if (totalSkillTest1 > totalSkillTest2){
         console.log(`${character1.NAME} scored 1 point!`);
         character1.POINTS++;
-      }else if(totalSkilltest2 > totalSkilltest1){
+      }else if(totalSkillTest2 > totalSkillTest1){
         console.log(`${character2.NAME} scored 1 point!`);
         character2.POINTS++;
       }
